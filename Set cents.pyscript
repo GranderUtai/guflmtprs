@@ -16,16 +16,11 @@ def apply(form):
 		cents = form.GetInputValue("¢")
 		viewing = form.GetInputValue("View ¢")
 		mode = form.GetInputValue("Mode")
-
-		# Determine if any notes are selected
 		selected_notes_exist = any(score.getNote(i).selected for i in range(score.noteCount))
-
 		pitchofs_values = []
 
 		for i in range(score.noteCount):
 			note = score.getNote(i)
-
-			# If at least one note is selected, skip unselected ones
 			if selected_notes_exist and not note.selected:
 				continue
 
@@ -36,7 +31,6 @@ def apply(form):
 					note.pitchofs = round(cents / 10)
 				else:
 					note.pitchofs += round(cents / 10)
-
 		if viewing:
 			if pitchofs_values:
 				min_c = min(pitchofs_values)
