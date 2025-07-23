@@ -1,0 +1,48 @@
+from flpianoroll import *
+import math
+
+midC = 60
+
+def createDialog():
+	form = ScriptDialog("Convert EDO", "convert selected notes between equal temperaments")
+	form.AddInputKnobInt("From", 12, 1, 120)
+	form.AddInputKnobInt("To", 12, 1, 120)
+	form.AddInputCheckbox("Retune", False)
+	return form
+
+def apply(form):
+	from_edo = form.GetInputValue("From")
+	to_edo	 = form.GetInputValue("To")
+	retune	 = form.GetInputValue("Retune")
+
+	from_step = 1200.0 / from_edo
+	to_step	  = 1200.0 / to_edo
+
+	changed = 0
+	selected_count = sum(1 for i in range(score.noteCount) if score.getNote(i).selected)
+
+	for i in range(score.noteCount):
+		note = score.getNote(i)
+
+		if selected_count > 0 and not note.selected:
+			continue
+
+		offset = note.number - 60
+		# total cents = note pitch + pitch offset in cents
+		cents = offset * from_step + (note.pitchofs * 10)
+
+		new_offset = int(round(cents / to_step))
+		new_pitch  = 60 + new_offset
+		new_pitch  = max(0, min(127, new_pitch))
+
+		if retune:
+			cents_exact = new_offset * to_step
+			leftover = cents - cents_exact
+			pitchofs = int(round(leftover / 10))
+			pitchofs = max(-120, min(120, pitchofs))
+		else:
+			pitchofs = 0
+
+		note.number = new_pitch
+		note.pitchofs = pitchofs
+		changed += 1

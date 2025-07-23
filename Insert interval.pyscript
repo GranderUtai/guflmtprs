@@ -1,0 +1,66 @@
+from flpianoroll import *
+import math
+
+def createDialog():
+	form = ScriptDialog("Insert interval", "insert or move a note an interval from selected notes")
+	form.AddInputText("Interval (x/y)", "3/2")
+	form.AddInputKnobInt("EDO", 12, 1, 240)
+	form.AddInputCheckbox("Flip", False)
+	form.AddInputCheckbox("Retune", False)
+	form.AddInputCombo("Tuning direction", ["Down", "Near", "Up"], 1)
+	form.AddInputCheckbox("Transpose", True)
+	return form
+
+def apply(form):
+	try:
+		ratio_str = form.GetInputValue("Interval (x/y)")
+		edo = form.GetInputValue("EDO")
+		flip = form.GetInputValue("Flip")
+		retune = form.GetInputValue("Retune")
+		direction_index = form.GetInputValue("Tuning direction")
+		transposing = form.GetInputValue("Transpose")
+		step_count = 0
+
+		x_str, y_str = ratio_str.split("/", 1)
+		x, y = int(x_str), int(y_str)
+
+		cents_exact = 1200.0 * math.log2(x / y)
+		if flip:
+			cents_exact = -cents_exact
+
+		step_size = 1200.0 / edo
+
+		if direction_index == 0:
+			step_count = math.ceil(cents_exact / step_size)
+		elif direction_index == 1:
+			step_count = round(cents_exact / step_size)
+		elif direction_index == 2:
+			step_count = math.floor(cents_exact / step_size)
+
+		quantized_cents = step_count * step_size
+		residual_cents = cents_exact - quantized_cents
+		residual_cents = max(-120, min(120, residual_cents))
+
+		# acrual stuff starts here
+		for i in range(score.noteCount):
+			note = score.getNote(i)
+			if not note.selected:
+				continue
+				
+			note.selected = False
+			if not transposing:
+				new = note.clone()
+				new.selected = True
+				new.number = max(0, min(127, new.number + step_count))
+				if retune:
+					new.pitchofs = int(round(residual_cents / 10 + note.pitchofs))
+				score.addNote(new)
+			else:
+				note.number = max(0, min(127, note.number + step_count))
+				if retune:
+					note.pitchofs = int(round(residual_cents / 10 + note.pitchofs))
+				note.selected = True
+
+		# Utils.ShowMessage(f"{added} {x}/{y} {edo} edo")
+	except Exception as e:
+		Utils.log(f"{e}")
