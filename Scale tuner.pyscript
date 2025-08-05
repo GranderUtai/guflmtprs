@@ -1,0 +1,46 @@
+from flpianoroll import *
+import math
+
+notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+def isAbs(s):
+	return not s.startswith(("+", "-"))
+
+def createDialog():
+	form = ScriptDialog("scale thang lite",
+		"Write a number to set absolute pitch (e.g. 386)\n"
+		"Use + or - to offset relative to current note (e.g. +12 or -10)\n"
+		"(Cents are rounded to tens)")
+	for note in notes:
+		form.AddInputText(note, "")
+	return form
+
+def apply(form):
+	try:
+		selectlar = any(score.getNote(i).selected for i in range(score.noteCount))
+		for i in range(score.noteCount):
+			note = score.getNote(i)
+			if selectlar and not note.selected:
+				continue
+			else:
+				pitch_class = note.number % 12
+				field = notes[pitch_class]
+				input = form.GetInputValue(field).strip()
+
+				if input == "":
+					note.pitchofs = 0
+				else:
+					if isAbs(input):
+						input = float(input)					
+						dist = pitch_class*100 	# distance from plain c to the note
+						note.pitchofs = round((input - dist)/10)
+					else:
+						if input.startswith("+"):
+							input = float(input.replace("+", ""))
+						else:
+							input = float(input)						
+						note.pitchofs = round(input/10)
+						
+
+	except Exception as e:
+		Utils.ShowMessage(f"Script error:\n{str(e)}")
