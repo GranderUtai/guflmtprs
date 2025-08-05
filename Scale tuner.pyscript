@@ -27,7 +27,7 @@ def apply(form):
 				field = notes[pitch_class]
 				input = form.GetInputValue(field).strip()
 
-				if input == "":
+				if input == "" or input == "-":
 					note.pitchofs = 0
 				else:
 					if isAbs(input):
@@ -43,4 +43,5 @@ def apply(form):
 						
 
 	except Exception as e:
+
 		Utils.ShowMessage(f"Script error:\n{str(e)}")
