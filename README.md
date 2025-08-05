@@ -1,7 +1,7 @@
 # guflmtprs
 stands for **g**rander**u**tai's **fl** **m**icro**t**onal **p**iano **r**oll **s**cripts
 
-3 little but handy scripts i made for more convenient note retuning and such
+FOUR! little but handy scripts i made for more convenient note retuning and such
 
 no credit needed you can use them
 
