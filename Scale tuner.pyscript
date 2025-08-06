@@ -1,15 +1,30 @@
 from flpianoroll import *
 import math
+import random
 
 notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
-def isAbs(s):
-	return not s.startswith(("+", "-"))
+def type(s):
+	if s.startswith(("+", "-")):
+		return "relative"
+	elif s.find("/"):
+		return "ratio"
+	else:
+		return "absolute"
 
+def namethatthang():
+	prefixes = ["", "super", "amazing", "wonderful", "fabulous", "outstanding", "ok", "supercalifragilisticexpialidocious", "cutting edge", "state of the art", "new", "old"]
+	editions = ["", "lite", "premium", "pro", "working 2025", "gold", "free", "64", "fruity edition", "producer edition"]
+	
+	return random.choice(prefixes) + " scale thang " + random.choice(editions)
+	
 def createDialog():
-	form = ScriptDialog("scale thang lite",
-		"Write a number to set absolute pitch (e.g. 386)\n"
-		"Use + or - to offset relative to current note (e.g. +12 or -10)\n"
+	form = ScriptDialog(namethatthang(),
+		"Allowed formats:\n"
+		"Blank (doesn't affect the note)\n"
+		"Absolute (386, 133.6)\n"
+		"Relative (+12, -57.2)\n"
+		"Ratio (5/3, 8/6)\n"
 		"(Cents are rounded to tens)")
 	for note in notes:
 		form.AddInputText(note, "")
@@ -30,18 +45,24 @@ def apply(form):
 				if input == "" or input == "-":
 					note.pitchofs = 0
 				else:
-					if isAbs(input):
-						input = float(input)					
-						dist = pitch_class*100 	# distance from plain c to the note
-						note.pitchofs = round((input - dist)/10)
-					else:
-						if input.startswith("+"):
-							input = float(input.replace("+", ""))
-						else:
-							input = float(input)						
-						note.pitchofs = round(input/10)
-						
-
+					try:
+						if type(input) == "absolute":
+							input = float(input)					
+							dist = pitch_class*100 	# distance from plain c to the note
+							note.pitchofs = round((input - dist)/10)
+						elif type(input) == "relative":
+							if input.startswith("+"):
+								input = float(input.replace("+", ""))
+							else:
+								input = float(input)						
+							note.pitchofs = round(input/10)
+						elif type(input) == "ratio":
+							noms, denoms = input.split("/")
+							nom, denom = int(noms), int(denoms)
+							cents = 1200 * math.log2(nom / denom)
+							base = pitch_class * 100
+							note.pitchofs = round((cents - base) / 10)
+					except Exception:
+						pakala = True
 	except Exception as e:
-
-		Utils.ShowMessage(f"Script error:\n{str(e)}")
+		pakala = True
