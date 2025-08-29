@@ -7,7 +7,7 @@ notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 def type(s):
 	if s.startswith(("+", "-")):
 		return "relative"
-	elif s.find("/"):
+	elif "/" in s:
 		return "ratio"
 	else:
 		return "absolute"
@@ -18,6 +18,8 @@ def namethatthang():
 	
 	return random.choice(prefixes) + " scale thang " + random.choice(editions)
 	
+
+	
 def createDialog():
 	form = ScriptDialog(namethatthang(),
 		"Allowed formats:\n"
@@ -26,6 +28,7 @@ def createDialog():
 		"Relative (+12, -57.2)\n"
 		"Ratio (5/3, 8/6)\n"
 		"(Cents are rounded to tens)")
+	form.AddInputCombo("Base note", notes, 0)
 	for note in notes:
 		form.AddInputText(note, "")
 	return form
@@ -38,8 +41,10 @@ def apply(form):
 			if selectlar and not note.selected:
 				continue
 			else:
+				basenote = form.GetInputValue("Base note")
 				pitch_class = note.number % 12
-				field = notes[pitch_class]
+				inscale_class = (pitch_class - basenote) % 12
+				field = notes[inscale_class]
 				input = form.GetInputValue(field).strip()
 
 				if input == "" or input == "-":
@@ -48,7 +53,7 @@ def apply(form):
 					try:
 						if type(input) == "absolute":
 							input = float(input)					
-							dist = pitch_class*100 	# distance from plain c to the note
+							dist = inscale_class*100
 							note.pitchofs = round((input - dist)/10)
 						elif type(input) == "relative":
 							if input.startswith("+"):
@@ -60,7 +65,7 @@ def apply(form):
 							noms, denoms = input.split("/")
 							nom, denom = int(noms), int(denoms)
 							cents = 1200 * math.log2(nom / denom)
-							base = pitch_class * 100
+							base = inscale_class * 100
 							note.pitchofs = round((cents - base) / 10)
 					except Exception:
 						pakala = True
